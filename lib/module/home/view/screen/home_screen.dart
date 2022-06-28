@@ -9,13 +9,24 @@ class HomeScreen extends StatefulWidget {
   State<HomeScreen> createState() => _HomeScreenState();
 }
 
+
 class _HomeScreenState extends State<HomeScreen> {
+
+  void pagination(){
+    homeScreenController.scrollController.addListener(() {
+      if(homeScreenController.scrollController.position.pixels==homeScreenController.scrollController.position.maxScrollExtent){
+      homeScreenController.getUserFromAPI(true);
+    }
+    });
+  }
+
   HomeScreenController homeScreenController = Get.put(HomeScreenController());
 
   @override
   void initState() {
     super.initState();
-    homeScreenController.getUserFromAPI();
+    pagination();
+    homeScreenController.getUserFromAPI(false);
   }
 
   @override
@@ -26,7 +37,6 @@ class _HomeScreenState extends State<HomeScreen> {
         AppBar(
           title: const Text("Home Screen"),
               ),
-              drawer: Drawer(),
         body: Obx(
           () => homeScreenController.isLoading.value
               ? const Center(
@@ -37,8 +47,15 @@ class _HomeScreenState extends State<HomeScreen> {
                       child: Text("No Data Found"),
                     )
                   : ListView.separated(
-                      itemCount: homeScreenController.usersList.length,
+                      controller: homeScreenController.scrollController,
+                      itemCount: homeScreenController.usersList.length+1,
                       itemBuilder: (context, index) {
+                      if(index == homeScreenController.usersList.length && homeScreenController.maxdetails.value){
+                        return const Padding(
+                          padding: EdgeInsets.only(right: 150,left: 150,bottom: 10,top: 10),
+                          child: CircularProgressIndicator(),
+                        );
+                      }
                         String firstName=homeScreenController
                                                 .usersList[index].firstName ??
                                             '';
@@ -69,13 +86,10 @@ class _HomeScreenState extends State<HomeScreen> {
                                     trailing: Padding(
                                       padding: const EdgeInsets.only(left: 8, right: 8),
                                       child: Builder(builder: (context) {
-                                        return StatefulBuilder(
-                                            builder: (context, setState) {
                                           return const Icon(
                                             Icons.star,
                                             color: Colors.amber,
                                           );
-                                        });
                                       }),
                                     ),
                                     leading: CircleAvatar(
